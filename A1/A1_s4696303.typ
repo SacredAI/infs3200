@@ -1,4 +1,4 @@
-#import "./template.typ": (
+#import "../template.typ": (
   PRINT_MARGIN, default-config, end-page, executive-summary, feature-list, image-break, image-divider,
   invisible-heading, style-text, styled-outline, table-list, template,
 )
@@ -225,7 +225,7 @@ WHERE fr.emp_no = eps.emp_no AND fr.birth_date >= '1970-01-01' AND fr.birth_date
 
 #image("assets/t4.c3.png")
 
- however there are no results returned, we can validate that this is try by checking the employees confidential table and validating against the existing employees table
+however there are no results returned, we can validate that this is try by checking the employees confidential table and validating against the existing employees table
 
 #image("assets/t4.c4.png")
 
@@ -247,5 +247,5 @@ SELECT first_name, last_name FROM employees_public eps,
 (SELECT ec.emp_no, ec.birth_date FROM employees_confidential ec, (SELECT emp_no FROM employees_public) ep WHERE ec.emp_no = ep.emp_no
 AND ec.birth_date >= '1970-01-01' AND ec.birth_date <= '1975-01-01') fr
 WHERE fr.emp_no = eps.emp_no;
-``` 
+```
 The above (for our current data set) significantly reduces the transmission cost as no rows match the predicate so only minimal information is needed for the transmission.
