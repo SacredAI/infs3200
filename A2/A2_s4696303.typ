@@ -108,3 +108,42 @@ if __name__ == "__main__":
 #image("assets/t1.1.png")
 
 == Q2
+
+```python
+from a2.src import P4
+from a2.src.helpers import nested_loop
+from p4.DataLinkage_py.src.data.db_loader import db_loader
+from p4.DataLinkage_py.src.data.measurement import calc_measure, load_benchmark
+
+
+def qgram(str: str, q: int) -> set[str]:
+    return {str[i : i + 1] for i in range(len(str) - q + 1)}
+
+
+def jaccard(qgram1: set, qgram2: set):
+    if not qgram1 or not qgram2:
+        return 1.0
+    return len(qgram1 & qgram2) / len(qgram1 | qgram2)
+
+
+if __name__ == "__main__":
+    restaurants = db_loader()
+    benchmark = load_benchmark(P4 / "data" / "restaurant_pair.csv")
+    for q in [2, 3, 4]:
+        for t in [0.6, 0.7, 0.8, 0.9, 1.0]:
+            count = 0
+            res = []
+            for i, j in nested_loop(restaurants):
+                name1 = i.get_name()
+                name2 = j.get_name()
+                sim = jaccard(qgram(name1, q), qgram(name2, q))
+                if sim >= t:
+                    count += 1
+                    res.append(f"{str(i.get_id())}_{str(j.get_id())}")
+
+            print(f"Q: {q} Threshold: {t} similar count: {count}")
+            calc_measure(res, benchmark)
+            print("------------------------------")
+```
+
+#image("assets/t1.2.png")
