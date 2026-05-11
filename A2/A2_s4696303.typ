@@ -190,3 +190,69 @@ if __name__ == "__main__":
 ```
 
 #image("assets/t1.3.png")
+
+= Task2
+
+= Q1
+First we build out the star schema
+```pintora
+erDiagram
+STAFF {
+  int SID PK
+  Varchar(20) FNAME
+  Varchar(20) LNAME
+  Varchar(10) STATE
+  Varchar(20) STORE
+}
+TIMEPERIOD {
+  int TID PK
+  int day
+  int month
+  int quarter
+  int year
+}
+PRODUCT {
+  int PID PK
+  Varchar(40) PRODUCT
+  Varchar(40) BRAND
+}
+SALES {
+  int SID PK
+  int TID pk
+  int PID pk
+  Decimal(10, 2) UNIT_COST
+  int QUANTITY
+  Decimal(10, 2) PRICE
+}
+
+SALES ||--|{ STAFF : "sold by"
+SALES ||--|{ PRODUCT : sold
+SALES ||--|{ TIMEPERIOD : "sold on"
+```
+then we create this in postgres
+```sql
+CREATE DATABASE "A2";
+\c "A2"
+CREATE USER "a2" WITH PASSWORD 'infs3200';
+GRANT ALL PRIVILEGES ON DATABASE "A2" TO "a2";
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+GRANT ALL ON TABLES TO "a2";
+CREATE TABLE staff (id SERIAL PRIMARY KEY, fname VARCHAR(20), lname VARCHAR(20), state VARCHAR(10), store VARCHAR(20) );
+CREATE TABLE timeperiod (id SERIAL PRIMARY KEY, day int, month int, quarter int, year int);
+CREATE TABLE product (id SERIAL PRIMARY KEY, product VARCHAR(40), brand VARCHAR(40));
+CREATE TABLE SALES (
+    sid int,
+    tid int,
+    pid int,
+    unit_cost Decimal(10, 2),
+    quantity int,
+    price Decimal(10, 2),
+    PRIMARY KEY (sid, tid, pid),
+    CONSTRAINT fk_staff FOREIGN KEY (sid) REFERENCES staff(id),
+    CONSTRAINT fk_timeperiod FOREIGN KEY (tid) REFERENCES timeperiod(id),
+    CONSTRAINT fk_product FOREIGN KEY (pid) REFERENCES product(id)
+);
+```
+
+#image("assets/t2.1.png")
+Next we need to load data in we'll do that with the following script
