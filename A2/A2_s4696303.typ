@@ -237,9 +237,9 @@ CREATE USER "a2" WITH PASSWORD 'infs3200';
 GRANT ALL PRIVILEGES ON DATABASE "A2" TO "a2";
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
 GRANT ALL ON TABLES TO "a2";
-CREATE TABLE staff (id SERIAL PRIMARY KEY, fname VARCHAR(20), lname VARCHAR(20), state VARCHAR(10), store VARCHAR(20) );
-CREATE TABLE timeperiod (id SERIAL PRIMARY KEY, day int, month int, quarter int, year int);
-CREATE TABLE product (id SERIAL PRIMARY KEY, product VARCHAR(40), brand VARCHAR(40));
+CREATE TABLE staff (sid int PRIMARY KEY, fname VARCHAR(20), lname VARCHAR(20), state VARCHAR(10), store VARCHAR(20) );
+CREATE TABLE timeperiod (tid int PRIMARY KEY, day int, month int, quarter int, year int);
+CREATE TABLE product (pid int PRIMARY KEY, product VARCHAR(40), brand VARCHAR(40));
 CREATE TABLE SALES (
     sid int,
     tid int,
@@ -248,11 +248,86 @@ CREATE TABLE SALES (
     quantity int,
     price Decimal(10, 2),
     PRIMARY KEY (sid, tid, pid),
-    CONSTRAINT fk_staff FOREIGN KEY (sid) REFERENCES staff(id),
-    CONSTRAINT fk_timeperiod FOREIGN KEY (tid) REFERENCES timeperiod(id),
-    CONSTRAINT fk_product FOREIGN KEY (pid) REFERENCES product(id)
+    CONSTRAINT fk_staff FOREIGN KEY (sid) REFERENCES staff(sid),
+    CONSTRAINT fk_timeperiod FOREIGN KEY (tid) REFERENCES timeperiod(tid),
+    CONSTRAINT fk_product FOREIGN KEY (pid) REFERENCES product(pid)
 );
 ```
 
 #image("assets/t2.1.png")
 Next we need to load data in we'll do that with the following script
+```python
+from datetime import datetime
+from math import ceil
+from pathlib import Path
+
+from p4.DataLinkage_py.src.psql.DBconnect import create_connection
+
+ROOT = Path(__file__).parent
+
+if __name__ == "__main__":
+    conn = create_connection(database="A2", user="a2")
+    count = 0
+    with conn.cursor() as cur:
+        cur.execute("TRUNCATE TABLE staff, timeperiod, product, sales;")
+        with open(ROOT / "Sales.csv", "r") as f:
+            # Skip the first line
+            f.readline()
+            while True:
+                line = f.readline()
+                if not line:
+                    break
+                line = line.replace("'", " ")
+                line = line.split(",")
+                # TID,SID,FNAME,LNAME,STATE,STORE,DATE,PID,BRAND,PRODUCT,UNIT_COST,QUANTITY,PRICE
+                (
+                    tid,
+                    sid,
+                    fname,
+                    lname,
+                    state,
+                    store,
+                    date,
+                    pid,
+                    brand,
+                    product,
+                    unit_cost,
+                    quantity,
+                    price,
+                ) = line
+                # Make the bold assumption that the data is clean and accept only the first copy
+                cur.execute(
+                    """INSERT INTO staff (sid, fname, lname, state, store)
+                    VALUES (%s, %s, %s, %s, %s) ON CONFLICT (sid) DO NOTHING;""",
+                    (sid, fname, lname, state, store),
+                )
+                sale_date = datetime.fromisoformat(date)
+                cur.execute(
+                    """INSERT INTO timeperiod (tid, day, month, quarter, year) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (tid) DO NOTHING""",
+                    (
+                        tid,
+                        sale_date.day,
+                        sale_date.month,
+                        ceil(sale_date.month / 3),
+                        sale_date.year,
+                    ),
+                )
+                cur.execute(
+                    """INSERT INTO product (pid, product, brand) VALUES (%s, %s, %s) ON CONFLICT (pid) DO NOTHING""",
+                    (pid, brand, product),
+                )
+                cur.execute(
+                    """INSERT INTO sales (sid, tid, pid, unit_cost, quantity, price) VALUES (%s, %s, %s, %s, %s, %s)""",
+                    (sid, tid, pid, unit_cost, quantity, price),
+                )
+                count += 1
+    conn.commit()
+    print(f"Added {count} rows")
+```
+#image("assets/t2.1.2.png")
+
+== Q2
+
+```sql
+SELECT COUNT(*) FROM staff;
+```
