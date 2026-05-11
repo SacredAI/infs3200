@@ -327,7 +327,18 @@ if __name__ == "__main__":
 #image("assets/t2.1.2.png")
 
 == Q2
-
+=== a
 ```sql
 SELECT COUNT(*) FROM staff;
 ```
+
+#image("assets/t2.1.2.png")
+
+Because the insert script doesn't allow duplicates we can just count the whole table
+
+=== b
+```sql
+SELECT COUNT(*) FROM sales s INNER JOIN timeperiod t ON t.tid = s.tid WHERE t.year = 2022 AND t.quarter = 3;
+```
+
+#image("assets/t2.1.2.png")
