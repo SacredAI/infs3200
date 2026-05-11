@@ -7,6 +7,7 @@
 #set heading(numbering: "1.")
 
 #show raw.where(lang: "pintora"): it => pintorita.render(it.text)
+#show raw.where(block: true): set text(size: 8pt)
 
 #let colors = (
   primary-background: rgb(173, 216, 230),
@@ -21,7 +22,7 @@
 #let config = (
   ..default-config,
   colors: colors,
-  title: "INFS3200 A1",
+  title: "INFS3200 A2",
   sub-title: "Alex Donnellan (46963037)",
   paper: "us-letter",
   show-title: true,
@@ -147,3 +148,45 @@ if __name__ == "__main__":
 ```
 
 #image("assets/t1.2.png")
+
+== Q3
+
+```python
+from a2.src import P4
+from a2.src.helpers import nested_loop
+from a2.src.task1.q2 import jaccard, qgram
+from p4.DataLinkage_py.src.data.db_loader import db_loader
+from p4.DataLinkage_py.src.data.measurement import calc_measure, load_benchmark
+
+if __name__ == "__main__":
+    restaurants = db_loader()
+    benchmark = load_benchmark(P4 / "data" / "restaurant_pair.csv")
+    q = 3
+    max_f_measure = 0
+    max_a = 0
+    for a in [0.5, 0.7, 0.9]:
+        for t in [0.5, 0.7, 0.9]:
+            count = 0
+            res = []
+            for i, j in nested_loop(restaurants):
+                name1 = i.get_name()
+                addr1 = i.get_address()
+                name2 = j.get_name()
+                addr2 = j.get_address()
+                sim_name = jaccard(qgram(name1, q), qgram(name2, q))
+                sim_addr = jaccard(qgram(addr1, q), qgram(addr2, q))
+                sim = a * sim_name + (1 - a) * sim_addr
+                if sim >= t:
+                    count += 1
+                    res.append(f"{str(i.get_id())}_{str(j.get_id())}")
+
+            print(f"Q: {q} Threshold: {t} similar count: {count}")
+            _, _, f_measure = calc_measure(res, benchmark)
+            print("------------------------------")
+            if f_measure > max_f_measure:
+                max_f_measure = f_measure
+                max_a = a
+    print(f"Max pair ({max_a}, {max_f_measure})")
+```
+
+#image("assets/t1.3.png")
