@@ -382,3 +382,27 @@ ORDER BY total_profit DESC LIMIT 3
 #image("assets/t4.c.png")
 
 == Q5
+```sql
+CREATE MATERIALIZED VIEW "Sales_Product_Staff" AS
+SELECT s.sid as sid, s.state as state, s.store as store, p.product as product, p.brand as brand, SUM(fs.quantity * fs.unit_cost) as total_cost, SUM(fs.quantity * (fs.price - fs.unit_cost)) as total_profit, SUM(fs.quantity) as total_sold
+FROM sales as fs
+INNER JOIN staff s ON fs.sid = s.sid
+INNER JOIN product p on fs.pid = p.pid
+GROUP BY ROLLUP(s.state, s.store, s.sid), ROLLUP(p.brand, p.product);
+```
+#image("assets/t5.1.png")
+
+=== a
+```sql
+CREATE VIEW "Top_3_Stores" AS
+SELECT store FROM "Sales_Product_Staff" WHERE product IS NULL AND brand IS NULL AND store IS NOT NULL ORDER BY total_profit DESC LIMIT 3;
+```
+
+#image("assets/t5.a.png")
+
+=== b
+```sql
+CREATE VIEW "Top_Products" AS
+SELECT DISTINCT ON (store) store, product, total_profit FROM "Sales_Product_Staff" WHERE store IS NOT NULL AND product IS NOT NULL ORDER BY store, total_profit DESC;
+```
+#image("assets/t5.b.png")
