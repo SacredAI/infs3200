@@ -348,11 +348,11 @@ SELECT COUNT(*) FROM sales s INNER JOIN timeperiod t ON t.tid = s.tid WHERE t.ye
 ```sql
 CREATE MATERIALIZED VIEW "Sales_Time_Staff" AS
 SELECT s.sid as sid, s.state as state, s.store as store, t.day as day, t.month as month, t.quarter as quarter, t.year as year,
-    SUM(fs.quantity * fs.price) as total_profit, SUM(fs.quantity * fs.unit_cost) as total_cost, SUM(fs.quantity * (fs.price - fs.unit_cost)) as gross_profit, SUM(fs.quantity) as total_sold
+    SUM(fs.quantity * fs.price) as total_revenu, SUM(fs.quantity * fs.unit_cost) as total_cost, SUM(fs.quantity * (fs.price - fs.unit_cost)) as total_profit, SUM(fs.quantity) as total_sold
 FROM sales as fs
 INNER JOIN staff s ON fs.sid = s.sid
 INNER JOIN timeperiod t ON fs.tid = t.tid
-GROUP BY ROLLUP (s.sid, s.state, s.store), ROLLUP (t.day, t.month, t.quarter, t.year);
+GROUP BY ROLLUP (s.state, s.store, s.sid), ROLLUP (t.year, t.quarter, t.month, t.day);
 ```
 
 #image("assets/t3.1.png")
@@ -360,6 +360,12 @@ GROUP BY ROLLUP (s.sid, s.state, s.store), ROLLUP (t.day, t.month, t.quarter, t.
 == Q4
 === a
 ```sql
-SELECT SUM(total_profit) FROM "Sales_Time_Staff" WHERE year = 2021 AND quarter = 4;
+SELECT total_profit FROM "Sales_Time_Staff" WHERE year = 2021 AND quarter = 4 AND day IS NULL AND month IS NULL and sid IS NULL and state IS NULL and store IS NULL;
 ```
 #image("assets/t4.a.png")
+
+=== b
+```sql
+SELECT year, state, total_profit FROM "Sales_Time_Staff" WHERE year IN (2021, 2022) AND state IN ('NSW', 'QLD') AND quarter IS NULL AND day IS NULL AND month IS NULL and sid IS NULL and store IS NULL;
+```
+#image("assets/t4.b.png")
