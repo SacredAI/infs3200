@@ -369,3 +369,16 @@ SELECT total_profit FROM "Sales_Time_Staff" WHERE year = 2021 AND quarter = 4 AN
 SELECT year, state, total_profit FROM "Sales_Time_Staff" WHERE year IN (2021, 2022) AND state IN ('NSW', 'QLD') AND quarter IS NULL AND day IS NULL AND month IS NULL and sid IS NULL and store IS NULL;
 ```
 #image("assets/t4.b.png")
+
+== c
+```sql
+SELECT * FROM crosstab('SELECT store, quarter, total_profit FROM "Sales_Time_Staff"
+WHERE year = 2021 AND day IS NULL AND month IS NULL AND sid IS NULL AND quarter IS NOT NULL AND
+store IN (SELECT store FROM "Sales_Time_Staff" WHERE year = 2021 AND day IS NULL AND month IS NULL AND sid IS NULL AND quarter IS NULL AND store IS NOT NULL
+ORDER BY total_profit DESC LIMIT 3
+)', 'SELECT DISTINCT quarter FROM timeperiod') as final_result (store TEXT, q1 NUMERIC, q2 NUMERIC, q3 NUMERIC, q4 NUMERIC);
+```
+
+#image("assets/t4.c.png")
+
+== Q5
